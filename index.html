@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Girassol - Seu Ano 2026</title>
+    <link rel="manifest" href="manifest.json" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        /* Sunny Day Gradient: Sun Yellow -> Sky Blue */
+        background: fixed linear-gradient(180deg, #fef9c3 0%, #bae6fd 50%, #7dd3fc 100%);
+        overflow-x: hidden;
+      }
+      /* Frutiger Aero Nature Background Overlay */
+      .aero-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        /* Sunny Field Image */
+        background-image: url('https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?q=80&w=2070&auto=format&fit=crop');
+        background-size: cover;
+        background-position: center bottom;
+        opacity: 0.45;
+        pointer-events: none;
+        mask-image: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,1) 100%);
+      }
+      /* Custom Scrollbar - Green/Yellow Theme */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.3);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(132, 204, 22, 0.8); /* Lime Green */
+        border-radius: 4px;
+      }
+      
+      .glass-shine {
+        background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.1) 100%);
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+    "recharts": "https://esm.sh/recharts@^3.6.0"
+  }
+}
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(registration => {
+          console.log('ServiceWorker registered: ', registration);
+        })
+        .catch(registrationError => {
+          console.log('ServiceWorker registration failed: ', registrationError);
+        });
+    });
+  }
+</script>
+</head>
+  <body>
+    <div class="aero-bg"></div>
+    <div id="root"></div>
+  </body>
+</html>

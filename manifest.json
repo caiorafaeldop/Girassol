@@ -1,0 +1,25 @@
+{
+  "name": "Girassol 2026",
+  "short_name": "Girassol",
+  "id": "/c26-girassol",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#bae6fd",
+  "theme_color": "#facc15",
+  "orientation": "portrait",
+  "scope": "./",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/869/869869.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/869/869869.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
