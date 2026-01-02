@@ -4,7 +4,8 @@ const STORAGE_KEYS = {
   TODOS: 'c26_todos',
   JOURNAL: 'c26_journal',
   // Migrating from 'weight' to 'health_logs' for the new comprehensive structure
-  HEALTH_LOGS: 'c26_health_logs', 
+  HEALTH_LOGS: 'c26_health_logs',
+  NEWS_CACHE: 'c26_news_cache', // Nova chave para cache de notícias
 };
 
 export const loadData = <T>(key: string, fallback: T): T => {

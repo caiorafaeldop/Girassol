@@ -1,11 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { GlassCard } from './ui/GlassCard';
 import { Habit, Todo, DailyLog } from '../types';
 import { 
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell, LineChart, Line, CartesianGrid 
+  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid 
 } from 'recharts';
-import { Trophy, Target, Zap, Dumbbell, Star, TrendingUp } from 'lucide-react';
+import { Dumbbell, Utensils, ChevronDown, ChevronUp, Calendar as CalendarIcon, CheckCircle2, Flame } from 'lucide-react';
 
 interface ProgressViewProps {
   habits: Habit[];
@@ -13,183 +12,216 @@ interface ProgressViewProps {
   logs: DailyLog[];
 }
 
-export const ProgressView: React.FC<ProgressViewProps> = ({ habits, todos, logs }) => {
-  
-  // 1. Calculate Habit Consistency (Last 7 Days)
-  const habitData = useMemo(() => {
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      return d.toISOString().split('T')[0];
-    });
+export const ProgressView: React.FC<ProgressViewProps> = ({ habits, logs }) => {
+  const [expandedHabitId, setExpandedHabitId] = useState<string | null>(null);
 
-    return habits.map(habit => {
-      const count = last7Days.filter(day => habit.completedDates.includes(day)).length;
-      return {
-        name: habit.title,
-        count: count,
-        score: (count / 7) * 100
-      };
-    }).sort((a, b) => b.score - a.score);
-  }, [habits]);
+  // Data helpers
+  const today = new Date();
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  const monthName = today.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
-  // 2. Task Statistics
-  const taskData = useMemo(() => {
-    const completed = todos.filter(t => t.completed).length;
-    const pending = todos.length - completed;
-    return [
-      { name: 'Feitas', value: completed, color: '#84cc16' }, // Lime Green
-      { name: 'Fazer', value: pending, color: '#bae6fd' },   // Sky Blue
-    ];
-  }, [todos]);
-
-  // 3. Health & Workout Trends
-  const healthData = useMemo(() => {
+  // 1. Weight Data
+  const weightData = useMemo(() => {
     return logs
-      .filter(l => l.weight !== undefined || l.workout)
-      .slice(-14) // Last 14 entries
+      .filter(l => l.weight !== undefined)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(-14) // Last 14 records
       .map(l => ({
-        date: l.date.substring(5).replace('-', '/'), // MM/DD
+        date: l.date.substring(5).replace('-', '/'),
         weight: l.weight,
-        workout: l.workout ? 1 : 0
       }));
   }, [logs]);
 
-  // 4. Achievements / Badges Logic
-  const badges = useMemo(() => {
-    const b = [];
-    const workoutsLast7Days = logs.slice(-7).filter(l => l.workout).length;
-    const completedTasks = todos.filter(t => t.completed).length;
-    const maxStreak = Math.max(...habits.map(h => h.streak), 0);
-
-    if (workoutsLast7Days >= 3) b.push({ icon: Dumbbell, color: 'text-orange-500', bg: 'bg-orange-100', title: 'Energia Pura', desc: '3+ treinos/semana' });
-    if (completedTasks >= 10) b.push({ icon: Target, color: 'text-blue-500', bg: 'bg-blue-100', title: 'Focado', desc: '10+ tarefas feitas' });
-    if (maxStreak >= 7) b.push({ icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-100', title: 'Imparável', desc: '7 dias seguidos!' });
-    if (habits.length > 0 && habitData.every(h => h.score > 50)) b.push({ icon: Star, color: 'text-green-500', bg: 'bg-green-100', title: 'Jardineiro', desc: 'Cultivando hábitos' });
+  // 2. Calendar Generator Helper
+  const renderCalendar = (
+    type: 'workout' | 'meals' | 'habit', 
+    dataMap?: Record<string, any>, 
+    habitDates?: string[]
+  ) => {
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay(); // 0 = Sun
     
-    return b;
-  }, [logs, todos, habits, habitData]);
+    const days = [];
+    // Empty slots for start of month
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      days.push(<div key={`empty-${i}`} className="h-8 w-8" />);
+    }
+
+    // Days
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      let content = null;
+      let bgClass = "bg-white/30 text-blue-900";
+
+      if (type === 'workout') {
+        const log = logs.find(l => l.date === dateStr);
+        if (log?.workout) {
+            bgClass = "bg-gradient-to-br from-orange-400 to-red-500 text-white shadow-md scale-110";
+            content = <Dumbbell size={12} strokeWidth={3} />;
+        }
+      } else if (type === 'meals') {
+        const log = logs.find(l => l.date === dateStr);
+        if (log) {
+            const count = Object.values(log.meals).filter(Boolean).length;
+            if (count >= 5) bgClass = "bg-green-600 text-white font-bold shadow-md"; // Excellent
+            else if (count >= 3) bgClass = "bg-green-400 text-white font-medium"; // Good
+            else if (count > 0) bgClass = "bg-red-300 text-white"; // Needs improvement
+            
+            if (count > 0) content = <span className="text-[10px]">{count}</span>;
+        }
+      } else if (type === 'habit' && habitDates) {
+        if (habitDates.includes(dateStr)) {
+            bgClass = "bg-blue-500 text-white shadow-md scale-105";
+            content = <CheckCircle2 size={12} />;
+        }
+      }
+
+      // Highlight Today ring
+      const isToday = day === today.getDate() && currentMonth === today.getMonth();
+      const borderClass = isToday ? "ring-2 ring-blue-500 ring-offset-1" : "";
+
+      days.push(
+        <div key={day} className={`h-8 w-8 rounded-full flex items-center justify-center text-xs transition-all ${bgClass} ${borderClass}`}>
+          {content || day}
+        </div>
+      );
+    }
+
+    return (
+        <div className="grid grid-cols-7 gap-2 mt-2 place-items-center">
+            {['D','S','T','Q','Q','S','S'].map((d, i) => (
+                <span key={i} className="text-[10px] font-bold text-blue-800/50">{d}</span>
+            ))}
+            {days}
+        </div>
+    );
+  };
 
   return (
     <div className="space-y-6 animate-fadeIn pb-24">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-black text-blue-900 drop-shadow-sm bg-white/40 inline-block px-6 py-2 rounded-full backdrop-blur-sm">
-            Seu Crescimento
-        </h2>
-      </div>
+      
+      {/* 1. WEIGHT CHART */}
+      <GlassCard title="Evolução de Peso">
+         <div className="h-64 w-full mt-2">
+            {weightData.length > 1 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={weightData}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                        <XAxis dataKey="date" tick={{fontSize: 10, fill: '#1e3a8a'}} axisLine={false} tickLine={false} dy={10} />
+                        <YAxis domain={['auto', 'auto']} hide />
+                        <Tooltip 
+                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}
+                            labelStyle={{ color: '#1e3a8a', fontWeight: 'bold' }}
+                        />
+                        <Line 
+                            type="monotone" 
+                            dataKey="weight" 
+                            stroke="#f97316" 
+                            strokeWidth={4} 
+                            dot={{ r: 4, fill: '#f97316', strokeWidth: 2, stroke: '#fff' }}
+                            activeDot={{ r: 7 }}
+                        />
+                    </LineChart>
+                </ResponsiveContainer>
+            ) : (
+                <div className="flex flex-col items-center justify-center h-full text-blue-800 italic bg-white/20 rounded-xl border border-white/30 text-center p-4">
+                    <p>Precisamos de mais dados.</p>
+                    <p className="text-xs mt-1">Registre seu peso em dias diferentes.</p>
+                </div>
+            )}
+         </div>
+      </GlassCard>
 
-      {/* Badges Section */}
-      <GlassCard title="Conquistas">
-        {badges.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3">
-            {badges.map((badge, idx) => (
-              <div key={idx} className={`flex items-center gap-3 p-3 rounded-xl border border-white/40 ${badge.bg} bg-opacity-80 backdrop-blur-sm shadow-sm`}>
-                <div className={`p-2 rounded-full bg-white/70 shadow-sm ${badge.color}`}>
-                  <badge.icon size={20} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        {/* 2. WORKOUT CALENDAR */}
+        <GlassCard>
+            <div className="flex items-center gap-2 mb-2">
+                <div className="p-1.5 bg-orange-100 rounded-lg text-orange-600">
+                    <Flame size={18} fill="currentColor" />
                 </div>
                 <div>
-                  <p className="font-bold text-blue-900 text-sm leading-tight">{badge.title}</p>
-                  <p className="text-[10px] text-blue-800 font-medium">{badge.desc}</p>
+                    <h3 className="font-bold text-blue-900 leading-none">Frequência de Treinos</h3>
+                    <p className="text-[10px] text-blue-800 capitalize">{monthName}</p>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-6 text-blue-800 text-sm italic bg-white/30 rounded-xl">
-            Semeie suas primeiras ações para colher medalhas!
-          </div>
-        )}
-      </GlassCard>
-
-      {/* Habits Chart */}
-      <GlassCard title="Raízes Fortes (7 dias)">
-        <div className="h-48 w-full">
-          {habits.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={habitData} layout="vertical" margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
-                <XAxis type="number" hide domain={[0, 7]} />
-                <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 10, fill: '#1e3a8a', fontWeight: 600 }} interval={0} />
-                <Tooltip 
-                  cursor={{ fill: 'rgba(255,255,255,0.3)' }}
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', backgroundColor: 'rgba(255,255,255,0.9)' }}
-                />
-                <Bar dataKey="count" radius={[0, 6, 6, 0]}>
-                   {habitData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.score >= 80 ? '#65a30d' : entry.score >= 50 ? '#facc15' : '#94a3b8'} />
-                    ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex items-center justify-center h-full text-blue-800 text-sm italic">Adicione hábitos para ver o gráfico.</div>
-          )}
-        </div>
-      </GlassCard>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Task Completion Pie */}
-        <GlassCard title="Colheita de Tarefas">
-            <div className="h-48 relative">
-                <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                        <Pie
-                            data={taskData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={45}
-                            outerRadius={75}
-                            paddingAngle={4}
-                            dataKey="value"
-                            stroke="none"
-                        >
-                            {taskData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                        </Pie>
-                        <Tooltip contentStyle={{borderRadius: '8px'}} />
-                    </PieChart>
-                </ResponsiveContainer>
-                {/* Center Text */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                     <span className="text-2xl font-black text-blue-900">{Math.round((taskData[0].value / (todos.length || 1)) * 100)}%</span>
-                     <span className="text-[9px] text-blue-700 uppercase font-bold tracking-widest">Completo</span>
-                </div>
+            </div>
+            {renderCalendar('workout')}
+            <div className="mt-3 flex items-center justify-center gap-2 text-[10px] text-blue-800/60">
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-orange-500"></span>Treino Feito</span>
             </div>
         </GlassCard>
 
-        {/* Weight Trend */}
-        <GlassCard title="Vitalidade">
-             <div className="h-48 w-full">
-                {healthData.length > 1 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={healthData}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                            <XAxis dataKey="date" tick={{fontSize: 10}} axisLine={false} tickLine={false} />
-                            <YAxis domain={['dataMin - 1', 'dataMax + 1']} hide />
-                            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }} />
-                            <Line 
-                                type="monotone" 
-                                dataKey="weight" 
-                                stroke="#f97316" 
-                                strokeWidth={3} 
-                                dot={{ r: 4, fill: '#f97316', strokeWidth: 2, stroke: '#fff' }}
-                                activeDot={{ r: 7 }}
-                            />
-                        </LineChart>
-                    </ResponsiveContainer>
-                ) : (
-                    <div className="flex items-center justify-center h-full text-blue-800 text-xs text-center">
-                        Registre peso em dias diferentes para ver a curva.
-                    </div>
-                )}
-             </div>
-             <div className="mt-2 text-xs text-center text-blue-800">
-                <span className="inline-flex items-center gap-1 font-medium">
-                    <TrendingUp size={12} className="text-yellow-500"/> Tendência dos últimos 14 registros
-                </span>
-             </div>
+        {/* 3. MEALS CALENDAR */}
+        <GlassCard>
+            <div className="flex items-center gap-2 mb-2">
+                <div className="p-1.5 bg-green-100 rounded-lg text-green-600">
+                    <Utensils size={18} />
+                </div>
+                <div>
+                    <h3 className="font-bold text-blue-900 leading-none">Refeições por Dia</h3>
+                    <p className="text-[10px] text-blue-800 capitalize">{monthName}</p>
+                </div>
+            </div>
+            {renderCalendar('meals')}
+             <div className="mt-3 flex items-center justify-center gap-3 text-[10px] text-blue-800/60">
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-300"></span>1-2</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400"></span>3-4</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-600"></span>5-6</span>
+            </div>
         </GlassCard>
+
       </div>
+
+      {/* 4. HABIT TRACKING (Interactive) */}
+      <div className="space-y-2">
+        <h3 className="text-lg font-bold text-blue-900 px-2 flex items-center gap-2">
+            <CalendarIcon size={20}/> Rastreio de Hábitos
+        </h3>
+        
+        {habits.map(habit => {
+            const isExpanded = expandedHabitId === habit.id;
+            
+            return (
+                <div key={habit.id} className="relative transition-all duration-300">
+                    <button 
+                        onClick={() => setExpandedHabitId(isExpanded ? null : habit.id)}
+                        className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                            isExpanded 
+                            ? 'bg-white/80 border-blue-300 shadow-glass' 
+                            : 'bg-white/40 border-white/50 hover:bg-white/60'
+                        }`}
+                    >
+                        <span className="font-bold text-blue-900">{habit.title}</span>
+                        <div className="flex items-center gap-2">
+                             <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-md font-medium">
+                                {habit.streak} dias
+                             </span>
+                             {isExpanded ? <ChevronUp size={20} className="text-blue-500"/> : <ChevronDown size={20} className="text-blue-400"/>}
+                        </div>
+                    </button>
+
+                    {/* Expanded Calendar */}
+                    {isExpanded && (
+                        <div className="mt-2 p-4 bg-white/30 border border-white/40 rounded-2xl animate-fadeIn">
+                             <p className="text-xs text-center text-blue-800 font-bold capitalize mb-2">{monthName}</p>
+                             {renderCalendar('habit', undefined, habit.completedDates)}
+                             <p className="text-[10px] text-center text-blue-800/60 mt-2 italic">
+                                "A consistência é a chave para o 2026."
+                             </p>
+                        </div>
+                    )}
+                </div>
+            );
+        })}
+        
+        {habits.length === 0 && (
+             <div className="text-center py-8 text-blue-800/50 bg-white/20 rounded-2xl border border-white/20">
+                Nenhum hábito cadastrado para rastrear.
+             </div>
+        )}
+      </div>
+
     </div>
   );
 };

@@ -5,45 +5,124 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Girassol - Seu Ano 2026</title>
     <link rel="manifest" href="manifest.json" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+
+    <!-- Tailwind Config & Scripts -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#FFB300", // Sunflower Gold
+                        "background-light": "#E0F7FA", 
+                        "background-dark": "#0F172A",
+                        "aero-blue": "#81D4FA",
+                        "aero-green": "#A5D6A7",
+                    },
+                    fontFamily: {
+                        display: ["Quicksand", "sans-serif"],
+                        body: ["Quicksand", "sans-serif"],
+                        sans: ["Quicksand", "sans-serif"], // Override default sans
+                    },
+                    borderRadius: {
+                        DEFAULT: "1rem",
+                        'xl': "1.5rem",
+                        '2xl': "2rem",
+                        '3xl': "3rem",
+                    },
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+                        'glass-dark': '0 8px 32px 0 rgba(0, 0, 0, 0.5)',
+                        'gloss': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.6), 0 4px 12px rgba(0,0,0,0.1)',
+                    },
+                    backgroundImage: {
+                        'gloss-gradient': 'linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 51%, rgba(255,255,255,0.1) 100%)',
+                    },
+                    animation: {
+                        'bounce-slow': 'bounce 3s infinite',
+                        'fadeIn': 'fadeIn 0.5s ease-out',
+                        'popIn': 'popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        popIn: {
+                             '0%': { opacity: '0', transform: 'scale(0.9)' },
+                             '100%': { opacity: '1', transform: 'scale(1)' },
+                        }
+                    }
+                },
+            },
+        };
+    </script>
+    
     <style>
       body {
-        font-family: 'Inter', sans-serif;
-        /* Sunny Day Gradient: Sun Yellow -> Sky Blue */
-        background: fixed linear-gradient(180deg, #fef9c3 0%, #bae6fd 50%, #7dd3fc 100%);
+        font-family: 'Quicksand', sans-serif;
+        background-color: #E0F7FA; /* Fallback color */
+        min-height: 100vh;
         overflow-x: hidden;
       }
-      /* Frutiger Aero Nature Background Overlay */
-      .aero-bg {
-        position: fixed;
+
+      /* Frutiger Aero Card Style */
+      .aero-card {
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+      .aero-card::before {
+        content: '';
+        position: absolute;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-        /* Sunny Field Image */
-        background-image: url('https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?q=80&w=2070&auto=format&fit=crop');
-        background-size: cover;
-        background-position: center bottom;
-        opacity: 0.45;
+        right: 0;
+        height: 50%;
+        background: linear-gradient(to bottom, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.1) 100%);
+        border-radius: inherit;
         pointer-events: none;
-        mask-image: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,1) 100%);
-      }
-      /* Custom Scrollbar - Green/Yellow Theme */
-      ::-webkit-scrollbar {
-        width: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.3);
-      }
-      ::-webkit-scrollbar-thumb {
-        background: rgba(132, 204, 22, 0.8); /* Lime Green */
-        border-radius: 4px;
+        z-index: 0;
       }
       
-      .glass-shine {
-        background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.1) 100%);
+      /* Orb Icon Style */
+      .orb-icon {
+        box-shadow: inset 0 2px 5px rgba(255,255,255,0.7), 
+                    inset 0 -2px 5px rgba(0,0,0,0.1),
+                    0 4px 8px rgba(0,0,0,0.2);
+        background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+      }
+
+      .no-scrollbar::-webkit-scrollbar {
+          display: none;
+      }
+      .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+      }
+
+      /* Animations */
+      @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(30px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+      @keyframes slideInLeft {
+        from { opacity: 0; transform: translateX(-30px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+      .animate-slide-right {
+        animation: slideInRight 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      }
+      .animate-slide-left {
+        animation: slideInLeft 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
       }
     </style>
 <script>
@@ -62,20 +141,18 @@
 <script type="importmap">
 {
   "imports": {
-    "recharts": "https://esm.sh/recharts@^3.6.0",
-    "react/": "https://esm.sh/react@^19.2.3/",
     "react": "https://esm.sh/react@^19.2.3",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
     "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0"
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "recharts": "https://esm.sh/recharts@^3.6.0"
   }
 }
 </script>
 </head>
-  <body>
-    <div class="aero-bg"></div>
+  <body class="text-slate-800 antialiased selection:bg-primary selection:text-white pb-28">
     <div id="root"></div>
-    <!-- ESTA LINHA ERA A QUE FALTAVA: -->
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>
