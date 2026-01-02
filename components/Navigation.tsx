@@ -46,7 +46,6 @@ export const Navigation: React.FC<NavigationProps> = ({ currentView, onChangeVie
     { view: AppView.TODO, icon: 'format_list_bulleted' },
     { view: AppView.HABITS, icon: 'check_box' },
     { view: AppView.WEIGHT, icon: 'fitness_center' },
-    { view: AppView.NEWS, icon: 'newspaper' },
     { view: AppView.JOURNAL, icon: 'book' },
   ];
 

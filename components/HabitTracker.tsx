@@ -90,7 +90,7 @@ export const HabitTracker: React.FC<HabitTrackerProps> = ({ habits, onUpdateHabi
 
   return (
     <div className="space-y-4 animate-fadeIn">
-       <GlassCard title="Minhas Raízes (Hábitos)">
+       <GlassCard title="Hábitos">
         <div className="flex gap-2 mb-6">
           <input
             type="text"
